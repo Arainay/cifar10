@@ -3,12 +3,19 @@ import torch.nn as nn
 import torch.optim as optim
 
 from Classifier import Classifier
-from cifar import train_loader
+from helpers import get_train_set_and_loader
 
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
 
 if __name__ == '__main__':
     torch.multiprocessing.freeze_support()
+
+    _, train_loader = get_train_set_and_loader()
+
     classifier = Classifier()
+    classifier.to(device)
 
     loss_function = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
@@ -21,7 +28,7 @@ if __name__ == '__main__':
         running_loss = 0.0
 
         for i, data in enumerate(train_loader, 0):
-            inputs, labels = data
+            inputs, labels = data[0].to(device), data[1].to(device)
 
             optimizer.zero_grad()
             outputs = classifier(inputs)
@@ -35,3 +42,6 @@ if __name__ == '__main__':
                 running_loss = 0.0
 
     print('Finished Training')
+
+    PATH = './model_storage/cifar_net.pth'
+    torch.save(classifier.state_dict(), PATH)
